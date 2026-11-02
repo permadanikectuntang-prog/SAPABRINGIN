@@ -4,6 +4,7 @@ import { ServiceRecord, ServiceConfig } from '../../types';
 import { BRINGIN_VILLAGES } from '../../data/defaultData';
 import { exportRecordsToExcel, exportToCsv } from '../../services/excelService';
 import { ServiceDetailModal } from './ServiceDetailModal';
+import { formatDisplayDate, formatFullIndonesianDate } from '../../utils/dateUtils';
 import { 
   Search, 
   PlusCircle, 
@@ -41,7 +42,7 @@ export const ServiceDataView: React.FC<ServiceDataViewProps> = ({
   const [selectedVillage, setSelectedVillage] = useState<string>('all');
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [filterYear, setFilterYear] = useState<string>('2026');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
 
@@ -101,9 +102,18 @@ export const ServiceDataView: React.FC<ServiceDataViewProps> = ({
       })
       .sort((a, b) => {
         if (sortOrder === 'desc') {
-          return b.serviceDate.localeCompare(a.serviceDate) || b.createdAt.localeCompare(a.createdAt);
+          return (
+            (b.serviceDate || '').localeCompare(a.serviceDate || '') ||
+            (b.createdAt || '').localeCompare(a.createdAt || '') ||
+            b.id.localeCompare(a.id)
+          );
         } else {
-          return a.serviceDate.localeCompare(b.serviceDate) || a.createdAt.localeCompare(b.createdAt);
+          // Default: Urutan paling pertama dientri / terlama di paling atas, setiap entri baru di paling bawah (FIFO)
+          return (
+            (a.serviceDate || '').localeCompare(b.serviceDate || '') ||
+            (a.createdAt || '').localeCompare(b.createdAt || '') ||
+            a.id.localeCompare(b.id)
+          );
         }
       });
   }, [records, serviceId, searchQuery, selectedVillage, filterMonth, filterYear, sortOrder]);
@@ -331,11 +341,12 @@ export const ServiceDataView: React.FC<ServiceDataViewProps> = ({
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-              className="flex items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors"
+              onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+              className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-colors font-medium shadow-2xs"
+              title="Klik untuk membalikkan urutan data"
             >
-              <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-              <span>Urutan: {sortOrder === 'desc' ? 'Terbaru' : 'Terlama'}</span>
+              <ArrowUpDown className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Urutan: <strong className="text-emerald-950">{sortOrder === 'asc' ? 'Pertama Dientri / Terlama di Atas' : 'Terbaru di Atas'}</strong></span>
             </button>
 
             <div className="flex items-center gap-1">
@@ -407,8 +418,11 @@ export const ServiceDataView: React.FC<ServiceDataViewProps> = ({
                         {record.registrationNumber}
                       </td>
 
-                      <td className="py-3 px-3.5 font-mono tabular-nums whitespace-nowrap text-slate-600">
-                        {record.serviceDate}
+                      <td 
+                        className="py-3 px-3.5 font-mono tabular-nums whitespace-nowrap text-slate-700 font-medium"
+                        title={formatFullIndonesianDate(record.serviceDate)}
+                      >
+                        {formatDisplayDate(record.serviceDate)}
                       </td>
 
                       <td className="py-3 px-3.5">

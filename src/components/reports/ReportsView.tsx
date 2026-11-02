@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { BRINGIN_VILLAGES } from '../../data/defaultData';
 import { BringinEmblem } from '../common/BringinEmblem';
 import { exportRecordsToExcel, exportToCsv, exportAllServicesToExcel } from '../../services/excelService';
+import { formatDisplayDate, formatFullIndonesianDate } from '../../utils/dateUtils';
 import { 
   Printer, 
   FileSpreadsheet, 
@@ -107,7 +108,7 @@ export const ReportsView: React.FC = () => {
       return [
         idx + 1,
         r.registrationNumber,
-        r.serviceDate,
+        formatDisplayDate(r.serviceDate),
         r.applicantName,
         r.nik,
         r.data?.desa || r.data?.desa_asal || '-',
@@ -373,8 +374,8 @@ export const ReportsView: React.FC = () => {
                       <td className="border border-slate-400 py-2 px-2.5 font-mono text-[11px] font-semibold text-slate-900 whitespace-nowrap">
                         {r.registrationNumber}
                       </td>
-                      <td className="border border-slate-400 py-2 px-2.5 font-mono tabular-nums text-center whitespace-nowrap">
-                        {r.serviceDate}
+                      <td className="border border-slate-400 py-2 px-2.5 font-mono tabular-nums text-center whitespace-nowrap" title={formatFullIndonesianDate(r.serviceDate)}>
+                        {formatDisplayDate(r.serviceDate)}
                       </td>
                       <td className="border border-slate-400 py-2 px-3 font-semibold text-slate-900">
                         {r.applicantName}

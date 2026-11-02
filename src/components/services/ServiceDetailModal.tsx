@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ServiceRecord, ServiceConfig } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { BringinEmblem } from '../common/BringinEmblem';
+import { formatDisplayDate, formatFullIndonesianDate } from '../../utils/dateUtils';
 import { X, Printer, Calendar, User, FileText, CheckCircle2, ShieldCheck, Hash, Eye } from 'lucide-react';
 
 interface ServiceDetailModalProps {
@@ -106,8 +107,8 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                   <div className="flex items-center gap-4 text-xs">
                     <div>
                       <span className="text-[11px] text-slate-500">Tanggal Pelayanan:</span>
-                      <div className="font-semibold text-slate-800 font-mono mt-0.5">
-                        {record.serviceDate}
+                      <div className="font-semibold text-slate-800 font-mono mt-0.5" title={formatFullIndonesianDate(record.serviceDate)}>
+                        {formatDisplayDate(record.serviceDate)}
                       </div>
                     </div>
                     <div>
@@ -227,7 +228,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                     </tr>
                     <tr className="border-b border-slate-100">
                       <td className="py-1 px-2 font-medium bg-slate-50">Tanggal Permohonan</td>
-                      <td className="py-1 px-2 font-mono">{record.serviceDate}</td>
+                      <td className="py-1 px-2 font-mono">{formatFullIndonesianDate(record.serviceDate)} ({formatDisplayDate(record.serviceDate)})</td>
                     </tr>
                     <tr>
                       <td className="py-1 px-2 font-medium bg-slate-50">Catatan Loket</td>
@@ -360,7 +361,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
               <tr>
                 <td className="py-1.5 font-bold">Tanggal Permohonan</td>
                 <td className="py-1.5">:</td>
-                <td className="py-1.5 font-mono">{record.serviceDate}</td>
+                <td className="py-1.5 font-mono">{formatFullIndonesianDate(record.serviceDate)} ({formatDisplayDate(record.serviceDate)})</td>
               </tr>
               {customFields
                 .filter(f => f.id !== 'nama_pemohon' && f.id !== 'nik' && f.id !== 'keterangan' && f.id !== 'desa' && f.id !== 'rt' && f.id !== 'rw')

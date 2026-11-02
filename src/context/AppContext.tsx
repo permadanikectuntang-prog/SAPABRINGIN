@@ -144,7 +144,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [records, setRecords] = useState<ServiceRecord[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.RECORDS);
-      return saved ? JSON.parse(saved) : DEFAULT_RECORDS;
+      if (saved) {
+        const parsed: ServiceRecord[] = JSON.parse(saved);
+        // Susun secara kronologis: paling lama / pertama kali dientri di paling atas
+        const sorted = [...parsed].sort((a, b) => 
+          (a.serviceDate || '').localeCompare(b.serviceDate || '') ||
+          (a.createdAt || '').localeCompare(b.createdAt || '') ||
+          a.id.localeCompare(b.id)
+        );
+
+        // Deduplicate any colliding sequence numbers from previous runs
+        const seenRegs: Record<string, number> = {};
+        return sorted.map(r => {
+          if (!r.registrationNumber) return r;
+          const regBase = r.registrationNumber.replace(/\/\d+$/, '');
+          const count = (seenRegs[regBase] || 0) + 1;
+          seenRegs[regBase] = count;
+          if (count > 1) {
+            return {
+              ...r,
+              registrationNumber: `${regBase}/${String(count).padStart(3, '0')}`
+            };
+          }
+          return r;
+        });
+      }
+      return DEFAULT_RECORDS;
     } catch {
       return DEFAULT_RECORDS;
     }
@@ -358,18 +383,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Auto registration number: REG-[CODE]/YYYY/MM/[COUNTER]
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const serviceDateVal = data.serviceDate || now.toISOString().split('T')[0];
+    const [recYear, recMonth] = serviceDateVal.split('-');
     const prefix = srv ? srv.id.substring(0, 3).toUpperCase() : 'REG';
-    const thisMonthRecords = records.filter(r => r.serviceId === serviceId && r.serviceDate.startsWith(`${year}-${month}`));
-    const seq = String(thisMonthRecords.length + 1).padStart(3, '0');
-    const registrationNumber = `REG-${prefix}/${year}/${month}/${seq}`;
+
+    // Count existing records for this service in this year/month to determine sequence
+    const thisPeriodRecords = records.filter(r => 
+      r.serviceId === serviceId && 
+      (r.serviceDate.startsWith(`${recYear}-${recMonth}`) || 
+       (r.registrationNumber && r.registrationNumber.includes(`/${recYear}/${recMonth}/`)))
+    );
+
+    // Calculate highest sequence in this period to guarantee no duplicate REG numbers
+    let maxSeq = thisPeriodRecords.length;
+    thisPeriodRecords.forEach(r => {
+      const parts = r.registrationNumber?.split('/');
+      if (parts && parts.length >= 4) {
+        const num = parseInt(parts[3], 10);
+        if (!isNaN(num) && num > maxSeq) {
+          maxSeq = num;
+        }
+      }
+    });
+
+    const seq = String(maxSeq + 1).padStart(3, '0');
+    const registrationNumber = `REG-${prefix}/${recYear}/${recMonth}/${seq}`;
 
     const newRecord: ServiceRecord = {
       id: `rec-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       serviceId,
       registrationNumber,
-      serviceDate: data.serviceDate || now.toISOString().split('T')[0],
+      serviceDate: serviceDateVal,
       applicantName: applicantName.trim(),
       nik: cleanNik,
       data: {
@@ -383,7 +427,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       updatedAt: now.toISOString(),
     };
 
-    setRecords(prev => [newRecord, ...prev]);
+    // Urutan: Penambahan entrian baru selalu muncul di paling bawah
+    setRecords(prev => [...prev, newRecord]);
 
     // Background sync to Firebase Cloud Firestore
     saveRecordToFirebase(newRecord).catch(() => {});
@@ -811,7 +856,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const importBatchRecords = (importedRecords: ServiceRecord[]) => {
     if (!importedRecords || importedRecords.length === 0) return;
-    setRecords(prev => [...importedRecords, ...prev]);
+    setRecords(prev => [...prev, ...importedRecords]);
     addLog('IMPOR_EXCEL', `Berhasil mengimpor ${importedRecords.length} data pelayanan dari file Excel.`);
     showToast('success', `${importedRecords.length} data pelayanan berhasil dimasukkan ke sistem!`);
   };

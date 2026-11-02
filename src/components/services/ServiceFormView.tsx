@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ServiceConfig, ServiceRecord, FormFieldConfig } from '../../types';
+import { formatDisplayDate, formatFullIndonesianDate } from '../../utils/dateUtils';
 import { 
   Save, 
   RotateCcw, 
@@ -298,6 +299,11 @@ export const ServiceFormView: React.FC<ServiceFormViewProps> = ({
                     validationErrors.serviceDate ? 'border-rose-400 bg-rose-50/50' : 'border-slate-300'
                   }`}
                 />
+                {serviceDate && (
+                  <p className="text-[10px] text-emerald-800 font-medium mt-1">
+                    Format: {formatDisplayDate(serviceDate)} ({formatFullIndonesianDate(serviceDate)})
+                  </p>
+                )}
                 {validationErrors.serviceDate && (
                   <p className="text-[11px] text-rose-500 mt-1">{validationErrors.serviceDate}</p>
                 )}

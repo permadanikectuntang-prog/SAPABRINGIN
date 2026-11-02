@@ -6,6 +6,7 @@
 
 import * as XLSX from 'xlsx';
 import { ServiceConfig, ServiceRecord } from '../types';
+import { formatDisplayDate } from '../utils/dateUtils';
 
 export interface ImportSummary {
   fileName: string;
@@ -304,7 +305,7 @@ export function exportRecordsToExcel(
     const row: any[] = [
       idx + 1,
       r.registrationNumber,
-      r.serviceDate,
+      formatDisplayDate(r.serviceDate),
       r.applicantName,
       r.nik, // string format
     ];
@@ -379,7 +380,7 @@ export function exportAllServicesToExcel(
       const row: any[] = [
         idx + 1,
         r.registrationNumber,
-        r.serviceDate,
+        formatDisplayDate(r.serviceDate),
         r.applicantName,
         r.nik,
       ];
