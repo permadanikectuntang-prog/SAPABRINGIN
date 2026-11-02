@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { generateAppsScriptCode } from '../../services/googleSheetsService';
-import { parseExcelFile } from '../../services/excelService';
+import { parseExcelFile, exportAllServicesToExcel } from '../../services/excelService';
 import { 
   Settings, 
   FileSpreadsheet, 
@@ -196,6 +196,13 @@ export const SettingsView: React.FC = () => {
     showToast('success', 'Cadangan database (backup JSON) berhasil diunduh.');
   };
 
+  // Direct Excel Export with Multi-Sheet structure (Google Sheets compatible)
+  const handleExportAllSheetsExcel = () => {
+    const filename = `DATABASE_SIAP_BRINGIN_GOOGLE_SHEETS_${new Date().toISOString().split('T')[0]}.xlsx`;
+    exportAllServicesToExcel(services, records, filename);
+    showToast('success', `File spreadsheet multi-sheet "${filename}" berhasil diunduh. Anda dapat langsung mengimpornya ke Google Sheets!`);
+  };
+
   const handleRestoreBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -374,14 +381,26 @@ export const SettingsView: React.FC = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowCodeModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors"
-          >
-            <Copy className="w-3.5 h-3.5" />
-            <span>Kode Apps Script & Panduan</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportAllSheetsExcel}
+              title="Unduh seluruh data pelayanan dalam format Excel yang siap diimpor ke Google Sheets"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-100 bg-emerald-900 hover:bg-emerald-800 border border-emerald-700/60 rounded-lg transition-colors"
+            >
+              <Download className="w-3.5 h-3.5 text-amber-300" />
+              <span>Unduh Spreadsheet (.xlsx)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowCodeModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>Kode Apps Script & Panduan</span>
+            </button>
+          </div>
         </div>
 
         <div className="p-6 space-y-5 text-xs">
@@ -391,7 +410,7 @@ export const SettingsView: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-slate-700">Status Database:</span>
-                {syncStatus.lastError ? (
+                {syncStatus.lastError || googleAppsScriptUrl.includes('EXAMPLE') || googleAppsScriptUrl.includes('SIAP_BRINGIN_EXAM') ? (
                   <span className="inline-flex items-center gap-1 text-rose-700 font-semibold">
                     <AlertCircle className="w-4 h-4 text-rose-600" />
                     <span>Terputus / Belum Dikonfigurasi</span>
@@ -413,9 +432,10 @@ export const SettingsView: React.FC = () => {
                 type="button"
                 onClick={handleTestConnection}
                 disabled={isTesting}
-                className="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg transition-colors"
+                className="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-1.5"
               >
-                {isTesting ? 'Menguji...' : 'Uji Koneksi'}
+                <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isTesting ? 'animate-spin' : ''}`} />
+                <span>{isTesting ? 'Menguji...' : 'Uji Koneksi'}</span>
               </button>
 
               <button
@@ -430,24 +450,90 @@ export const SettingsView: React.FC = () => {
             </div>
           </div>
 
+          {/* Diagnostic Alert if placeholder URL detected */}
+          {(googleAppsScriptUrl.includes('EXAMPLE') || googleAppsScriptUrl.includes('SIAP_BRINGIN_EXAM') || googleAppsScriptUrl.includes('AKfycbzSIAP')) && (
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 space-y-2.5">
+              <div className="flex items-start gap-2.5">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-bold text-xs text-amber-950">
+                    Solusi: URL Google Apps Script Masih Berupa Contoh Bawaan (Placeholder)
+                  </h3>
+                  <p className="text-[11px] text-amber-800 mt-1 leading-relaxed">
+                    Status saat ini <strong>"Terputus / Belum Dikonfigurasi"</strong> karena kolom URL di bawah masih berisi nilai contoh <code>(...EXAMPLE_KEY...)</code>. Agar data dapat tersimpan langsung ke Google Sheets Anda:
+                  </p>
+                </div>
+              </div>
+
+              <div className="pl-7 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                <div className="p-2.5 bg-white/80 rounded-lg border border-amber-200">
+                  <span className="font-bold text-slate-800 block mb-1">1. Pasang Apps Script (2 Menit):</span>
+                  <span>Buka Spreadsheet Anda, tempelkan skrip otomatis, lalu deploy sebagai Web App dengan akses <strong>"Anyone / Siapa saja"</strong>.</span>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowCodeModal(true)}
+                      className="px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold rounded text-[11px] flex items-center gap-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Buka Panduan & Salin Skrip</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-white/80 rounded-lg border border-amber-200">
+                  <span className="font-bold text-slate-800 block mb-1">2. Buka Lembar Spreadsheet Anda:</span>
+                  <span>Klik tautan langsung di bawah untuk membuka spreadsheet Google Anda:</span>
+                  <div className="mt-2">
+                    <a
+                      href={`https://docs.google.com/spreadsheets/d/${googleSheetId}/edit`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-emerald-800 hover:text-emerald-950 font-bold underline text-[11px]"
+                    >
+                      <span>Buka Spreadsheet di Tab Baru</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Test connection result notice */}
           {testResult && (
-            <div className={`p-3 rounded-lg border text-xs ${
+            <div className={`p-3.5 rounded-lg border text-xs ${
               testResult.success
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                : 'bg-rose-50 border-rose-200 text-rose-800'
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                : 'bg-rose-50 border-rose-300 text-rose-800'
             }`}>
-              <div className="font-semibold">{testResult.success ? 'Koneksi Berhasil!' : 'Koneksi Gagal'}</div>
-              <p className="mt-0.5">{testResult.message}</p>
+              <div className="font-bold flex items-center gap-1.5">
+                {testResult.success ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <AlertCircle className="w-4 h-4 text-rose-600" />}
+                <span>{testResult.success ? 'Koneksi Berhasil!' : 'Koneksi Gagal'}</span>
+              </div>
+              <p className="mt-1 pl-5.5 leading-relaxed">{testResult.message}</p>
             </div>
           )}
 
           {/* Configuration Inputs */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <div>
-              <label className="block text-slate-700 font-semibold mb-1">
-                GOOGLE_SHEET_ID (ID Spreadsheet)
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-slate-700 font-semibold">
+                  GOOGLE_SHEET_ID (ID Spreadsheet)
+                </label>
+                {googleSheetId && (
+                  <a
+                    href={`https://docs.google.com/spreadsheets/d/${googleSheetId}/edit`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-emerald-700 hover:text-emerald-900 font-semibold inline-flex items-center gap-1"
+                  >
+                    <span>Buka Sheet</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
               <input
                 type="text"
                 placeholder="Contoh: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
@@ -469,11 +555,25 @@ export const SettingsView: React.FC = () => {
                 placeholder="https://script.google.com/macros/s/AKfycb.../exec"
                 value={googleAppsScriptUrl}
                 onChange={(e) => setGoogleAppsScriptUrl(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-mono text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                className={`w-full px-3 py-2 bg-slate-50 border rounded-lg font-mono text-xs focus:outline-none focus:ring-1 ${
+                  googleAppsScriptUrl.includes('EXAMPLE') || googleAppsScriptUrl.includes('SIAP_BRINGIN_EXAM')
+                    ? 'border-amber-400 ring-1 ring-amber-300 bg-amber-50/30'
+                    : 'border-slate-300 focus:ring-emerald-600'
+                }`}
               />
-              <p className="text-[10px] text-slate-400 mt-1">
-                Dihasilkan setelah Anda men-deploy skrip Apps Script sebagai 'Web App'.
-              </p>
+              {googleAppsScriptUrl.includes('EXAMPLE') || googleAppsScriptUrl.includes('SIAP_BRINGIN_EXAM') ? (
+                <p className="text-[10px] text-amber-700 font-semibold mt-1 flex items-center gap-1">
+                  <span>⚠️ Masih berupa URL contoh. Ganti dengan URL hasil deploy Apps Script Anda.</span>
+                </p>
+              ) : googleAppsScriptUrl.startsWith('https://script.google.com/macros/s/') && googleAppsScriptUrl.endsWith('/exec') ? (
+                <p className="text-[10px] text-emerald-700 font-semibold mt-1 flex items-center gap-1">
+                  <span>✓ Format URL Web App valid. Klik 'Uji Koneksi' untuk menguji.</span>
+                </p>
+              ) : (
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Dihasilkan setelah Anda men-deploy skrip Apps Script sebagai 'Web App' (berakhiran /exec).
+                </p>
+              )}
             </div>
 
             <div>
@@ -803,33 +903,113 @@ export const SettingsView: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-4">
-              <div className="bg-amber-50 border border-amber-200 p-3.5 rounded-lg text-amber-900 space-y-1">
-                <div className="font-bold">Langkah Pemasangan di Google Spreadsheet:</div>
-                <ol className="list-decimal list-inside space-y-1 pl-1">
-                  <li>Buka Google Spreadsheet Anda (atau buat baru di Google Drive).</li>
-                  <li>Klik menu <strong>Extensions (Ekstensi)</strong> &gt; <strong>Apps Script</strong>.</li>
-                  <li>Hapus kode bawaan, lalu tempel (paste) kode di bawah ini.</li>
-                  <li>Klik tombol <strong>Deploy (Terapkan)</strong> &gt; <strong>New deployment (Penerapan baru)</strong>.</li>
-                  <li>Pilih jenis <strong>Web app</strong>, isi execute as <strong>Me</strong>, dan Who has access: <strong>Anyone (Siapa saja)</strong>.</li>
-                  <li>Salin <strong>Web App URL</strong> yang dihasilkan dan masukkan ke Pengaturan SIAP BRINGIN!</li>
-                </ol>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-800">Kode Google Apps Script Siap Pakai:</span>
-                <button
-                  type="button"
-                  onClick={handleCopyAppsScript}
-                  className="flex items-center gap-1.5 px-3 py-1.5 font-bold text-emerald-950 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-xs transition-colors"
+            <div className="p-6 overflow-y-auto space-y-5">
+              {/* Direct Link Banner */}
+              <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <FileSpreadsheet className="w-5 h-5 text-emerald-800 shrink-0" />
+                  <div>
+                    <span className="font-bold text-emerald-950 block">Target Spreadsheet Kecamatan Bringin:</span>
+                    <span className="font-mono text-[11px] text-emerald-800 break-all">{googleSheetId || '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'}</span>
+                  </div>
+                </div>
+                <a
+                  href={`https://docs.google.com/spreadsheets/d/${googleSheetId || '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'}/edit`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 shrink-0 transition-colors shadow-xs"
                 >
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>{isCopiedCode ? 'Tersalin!' : 'Salin Seluruh Kode'}</span>
-                </button>
+                  <span>Buka Sheet</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
               </div>
 
-              <div className="bg-slate-900 text-emerald-300 font-mono text-[11px] p-4 rounded-lg overflow-x-auto max-h-72 border border-slate-800">
-                <pre>{generateAppsScriptCode(googleSheetId)}</pre>
+              {/* Step-by-step Cards */}
+              <div className="space-y-3">
+                <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                    1
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-900">Buka Spreadsheet & Menu Apps Script</div>
+                    <p className="text-slate-600 mt-0.5">
+                      Buka Google Spreadsheet Anda, lalu di bilah menu atas klik <strong>Ekstensi (Extensions)</strong> &gt; pilih <strong>Apps Script</strong>. Tab editor skrip Google akan terbuka.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                    2
+                  </div>
+                  <div className="w-full">
+                    <div className="font-bold text-slate-900">Tempelkan (Paste) Kode Backend SIAP BRINGIN</div>
+                    <p className="text-slate-600 mt-0.5 mb-2">
+                      Hapus teks kode bawaan (seperti <code>function myFunction() &#123;&#125;</code>), lalu salin seluruh kode dari kotak di bawah dan tempelkan. Tekan ikon disket (Simpan / Ctrl+S).
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleCopyAppsScript}
+                      className="px-3 py-1.5 font-bold text-emerald-950 bg-amber-400 hover:bg-amber-300 rounded-lg text-xs shadow-xs transition-colors flex items-center gap-1.5"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>{isCopiedCode ? 'Kode Berhasil Disalin!' : 'Salin Seluruh Kode Skrip'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-lg border border-amber-300 bg-amber-50/70 flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-amber-500 text-emerald-950 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                    3
+                  </div>
+                  <div>
+                    <div className="font-bold text-amber-950 flex items-center gap-1.5">
+                      <span>Deploy sebagai Aplikasi Web (PENTING)</span>
+                      <span className="text-[10px] bg-amber-400 text-emerald-950 px-1.5 py-0.5 rounded font-bold">Kritis</span>
+                    </div>
+                    <p className="text-amber-900 mt-0.5">
+                      Di pojok kanan atas editor Apps Script, klik tombol biru <strong>Deploy (Terapkan)</strong> &gt; pilih <strong>New deployment (Penerapan baru)</strong>:
+                    </p>
+                    <ul className="mt-2 space-y-1 text-slate-800 pl-2">
+                      <li>• Klik ikon gerigi (Select type) &gt; pilih <strong>Web app (Aplikasi Web)</strong>.</li>
+                      <li>• Description: <code className="bg-white px-1 rounded border">SIAP Bringin Backend</code></li>
+                      <li>• Execute as (Jalankan sebagai): <strong>Me (Saya - email Anda)</strong></li>
+                      <li>• Who has access (Siapa yang memiliki akses): <strong className="text-emerald-800 underline bg-emerald-100/70 px-1 rounded">Anyone (Siapa saja)</strong> ⚠️ <em>Wajib dipilih 'Anyone' agar web app dapat mengirim data tanpa terblokir autentikasi redirect.</em></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                    4
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-900">Salin Web App URL ke Aplikasi SIAP BRINGIN</div>
+                    <p className="text-slate-600 mt-0.5">
+                      Klik <strong>Deploy</strong> (jika diminta izin, klik <em>Review permissions</em> &gt; pilih akun Google Anda &gt; <em>Advanced / Lanjutan</em> &gt; <em>Go to SIAP Bringin</em> &gt; <em>Allow / Izinkan</em>).
+                      <br />
+                      Salin <strong>Web App URL</strong> yang dihasilkan (berakhiran <code>/exec</code>), tempelkan ke kolom <strong>URL Google Apps Script</strong> di Pengaturan ini, lalu klik <strong>Simpan Semua Pengaturan</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-bold text-slate-800">Kode Google Apps Script Siap Pakai (Otomatis Sesuai Spreadsheet Anda):</span>
+                  <button
+                    type="button"
+                    onClick={handleCopyAppsScript}
+                    className="flex items-center gap-1.5 px-3 py-1 font-bold text-emerald-950 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-xs transition-colors"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>{isCopiedCode ? 'Tersalin!' : 'Salin Kode'}</span>
+                  </button>
+                </div>
+
+                <div className="bg-slate-900 text-emerald-300 font-mono text-[11px] p-4 rounded-lg overflow-x-auto max-h-64 border border-slate-800">
+                  <pre>{generateAppsScriptCode(googleSheetId)}</pre>
+                </div>
               </div>
             </div>
 

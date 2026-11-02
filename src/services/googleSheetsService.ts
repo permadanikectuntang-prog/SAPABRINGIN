@@ -35,17 +35,35 @@ export async function testGoogleSheetsConnection(
   if (!appsScriptUrl || appsScriptUrl.trim() === '') {
     return {
       success: false,
-      message: 'URL Google Apps Script belum diisi. Silakan masukkan URL Web App Apps Script.',
+      message: 'URL Google Apps Script belum diisi. Silakan masukkan URL Web App Apps Script Anda.',
+      latencyMs: 0,
+    };
+  }
+
+  const cleanUrl = appsScriptUrl.trim();
+
+  // Detect placeholder/dummy URL
+  if (cleanUrl.includes('EXAMPLE') || cleanUrl.includes('SIAP_BRINGIN_EXAM') || cleanUrl.includes('AKfycbzSIAP')) {
+    return {
+      success: false,
+      message: 'URL Google Apps Script saat ini masih berupa URL CONTOH (Placeholder). Anda harus memasang skrip di Google Spreadsheet Anda dan menempelkan Web App URL yang sebenarnya (berakhiran /exec).',
+      latencyMs: 0,
+    };
+  }
+
+  if (!cleanUrl.startsWith('https://script.google.com/macros/s/') || !cleanUrl.endsWith('/exec')) {
+    return {
+      success: false,
+      message: 'Format URL tidak sesuai. URL Google Apps Script yang valid harus berawalan "https://script.google.com/macros/s/..." dan berakhiran "/exec".',
       latencyMs: 0,
     };
   }
 
   try {
-    // Try pinging the endpoint with a test action
-    const url = new URL(appsScriptUrl);
+    const url = new URL(cleanUrl);
     url.searchParams.set('action', 'test');
     if (sheetId) {
-      url.searchParams.set('sheetId', sheetId);
+      url.searchParams.set('sheetId', sheetId.trim());
     }
 
     const response = await fetch(url.toString(), {
@@ -58,10 +76,16 @@ export async function testGoogleSheetsConnection(
     const latency = Date.now() - startTime;
 
     if (response.ok) {
-      const resJson = await response.json().catch(() => ({ status: 'ok' }));
+      const resJson = await response.json().catch(() => ({ success: true, message: 'Endpoint aktif' }));
       return {
         success: true,
         message: `Koneksi Google Sheets berhasil! Respon diterima dalam ${latency}ms. (${resJson.message || 'Database siap digunakan'})`,
+        latencyMs: latency,
+      };
+    } else if (response.status === 404) {
+      return {
+        success: false,
+        message: `URL Web App tidak ditemukan (HTTP 404). Pastikan Web App sudah di-deploy dengan benar dan berakhiran '/exec'.`,
         latencyMs: latency,
       };
     } else {
@@ -75,7 +99,7 @@ export async function testGoogleSheetsConnection(
     const latency = Date.now() - startTime;
     return {
       success: false,
-      message: `Gagal menghubungi endpoint: ${error.message || 'Periksa CORS atau izin deployment Web App (Pastikan "Who has access" = "Anyone")'}.`,
+      message: `Gagal menghubungi endpoint: ${error.message || 'Koneksi ditolak'}. Pastikan saat Deployment di Apps Script, opsi 'Who has access' (Akses) dipilih 'Anyone' (Siapa saja).`,
       latencyMs: latency,
     };
   }
@@ -93,22 +117,33 @@ export async function syncWithGoogleAppsScript(
   if (!appsScriptUrl || appsScriptUrl.trim() === '') {
     return {
       success: false,
-      message: 'URL Google Apps Script belum diisi.',
+      message: 'URL Google Apps Script belum diisi di Pengaturan.',
+      timestamp,
+    };
+  }
+
+  const cleanUrl = appsScriptUrl.trim();
+
+  // Detect placeholder/dummy URL
+  if (cleanUrl.includes('EXAMPLE') || cleanUrl.includes('SIAP_BRINGIN_EXAM') || cleanUrl.includes('AKfycbzSIAP')) {
+    return {
+      success: false,
+      message: 'URL Google Apps Script masih menggunakan nilai contoh (placeholder). Silakan deploy Apps Script di Google Sheets Anda terlebih dahulu untuk mendapatkan URL deployment asli.',
       timestamp,
     };
   }
 
   try {
-    const response = await fetch(appsScriptUrl, {
+    const response = await fetch(cleanUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8', // Google Apps Script handles text/plain best to prevent preflight CORS issues
+        'Content-Type': 'text/plain;charset=utf-8', // Google Apps Script handles text/plain without OPTIONS preflight
       },
       body: JSON.stringify(payload),
     });
 
     if (response.ok) {
-      const result = await response.json().catch(() => ({ success: true, message: 'Data berhasil disinkronkan' }));
+      const result = await response.json().catch(() => ({ success: true, message: 'Data berhasil disinkronkan ke Google Sheets' }));
       return {
         success: true,
         message: result.message || 'Sinkronisasi dengan Google Sheets berhasil!',
@@ -118,16 +153,34 @@ export async function syncWithGoogleAppsScript(
     } else {
       return {
         success: false,
-        message: `HTTP Error ${response.status} dari Google Apps Script`,
+        message: `HTTP Error ${response.status} dari Google Apps Script: ${response.statusText}`,
         timestamp,
       };
     }
   } catch (err: any) {
-    return {
-      success: false,
-      message: `Error komunikasi: ${err.message || 'Jaringan tidak dapat terhubung'}`,
-      timestamp,
-    };
+    // Attempt no-cors fallback if direct CORS fails due to Google redirect
+    try {
+      await fetch(cleanUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      return {
+        success: true,
+        message: 'Permintaan sinkronisasi telah dikirim ke Google Apps Script (Mode no-cors). Periksa lembar Google Sheets Anda dalam beberapa saat.',
+        timestamp,
+      };
+    } catch {
+      return {
+        success: false,
+        message: `Gagal sinkronisasi: ${err.message || 'Koneksi terputus'}. Pastikan URL Web App valid dan pengaturan akses 'Anyone' (Siapa saja).`,
+        timestamp,
+      };
+    }
   }
 }
 
