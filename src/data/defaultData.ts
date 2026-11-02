@@ -401,10 +401,11 @@ export const DEFAULT_USERS: User[] = [
 ];
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  appName: 'SIAP BRINGIN',
+  appName: 'SAPA BRINGIN',
   appFullName: 'Sistem Aplikasi Pelayanan Kecamatan Bringin',
   institutionName: 'Kecamatan Bringin, Kabupaten Semarang',
   institutionAddress: 'Jl. Raya Bringin No. 1 Bringin, Kab. Semarang, Jawa Tengah 50772',
+  logoUrl: '/assets/aistudio/Lambang_Kabupaten_Semarang_157237ff.webp',
   googleSheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
   googleAppsScriptUrl: 'https://script.google.com/macros/s/AKfycbzSIAP_BRINGIN_EXAMPLE_KEY/exec',
   syncMode: 'auto',
@@ -802,7 +803,7 @@ export const DEFAULT_LOGS: ActivityLog[] = [
     userName: 'admin',
     userRole: 'ADMINISTRATOR',
     activityType: 'LOGIN',
-    description: 'Petugas Administrator berhasil masuk ke sistem SIAP BRINGIN.',
+    description: 'Petugas Administrator berhasil masuk ke sistem SAPA BRINGIN.',
   },
   {
     id: 'log-002',

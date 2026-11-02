@@ -1,5 +1,5 @@
 /**
- * Google Sheets Integration Service for SIAP BRINGIN
+ * Google Sheets Integration Service for SAPA BRINGIN
  * Handles communication with Google Sheets via Google Apps Script Web App / API.
  */
 
@@ -191,7 +191,7 @@ export async function syncWithGoogleAppsScript(
 export function generateAppsScriptCode(spreadsheetId: string = ''): string {
   return `/**
  * ======================================================================
- * BACKEND GOOGLE APPS SCRIPT - SIAP BRINGIN
+ * BACKEND GOOGLE APPS SCRIPT - SAPA BRINGIN
  * SISTEM APLIKASI PELAYANAN KECAMATAN BRINGIN, KABUPATEN SEMARANG
  * ======================================================================
  * 
@@ -202,11 +202,11 @@ export function generateAppsScriptCode(spreadsheetId: string = ''): string {
  * 4. Klik tombol 'Save' (ikon disket).
  * 5. Klik 'Deploy' (Terapkan) > 'New deployment' (Penerapan baru).
  * 6. Pilih jenis: 'Web app' (Aplikasi web).
- * 7. Isi keterangan: 'SIAP Bringin v1'.
+ * 7. Isi keterangan: 'SAPA Bringin v1'.
  * 8. Execute as: 'Me' (Email Anda).
  * 9. Who has access: 'Anyone' (Siapa saja - penting agar web app bisa kirim data).
  * 10. Klik 'Deploy', izinkan otorisasi akun Google Anda.
- * 11. Salin 'Web app URL' dan tempel ke Pengaturan SIAP BRINGIN.
+ * 11. Salin 'Web app URL' dan tempel ke Pengaturan SAPA BRINGIN.
  */
 
 const TARGET_SPREADSHEET_ID = "${spreadsheetId || ''}";
@@ -224,7 +224,7 @@ function doGet(e) {
   if (action === "test") {
     return ContentService.createTextOutput(JSON.stringify({
       success: true,
-      message: "SIAP BRINGIN Google Apps Script Backend aktif dan terhubung!",
+      message: "SAPA BRINGIN Google Apps Script Backend aktif dan terhubung!",
       timestamp: new Date().toISOString()
     })).setMimeType(ContentService.MimeType.JSON);
   }

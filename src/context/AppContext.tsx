@@ -180,7 +180,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [settings, setSettings] = useState<AppSettings>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-      return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.appName === 'SIAP BRINGIN' || !parsed.appName) {
+          parsed.appName = 'SAPA BRINGIN';
+        }
+        if (!parsed.logoUrl || parsed.logoUrl.trim() === '') {
+          parsed.logoUrl = '/assets/aistudio/Lambang_Kabupaten_Semarang_157237ff.webp';
+        }
+        return parsed;
+      }
+      return DEFAULT_SETTINGS;
     } catch {
       return DEFAULT_SETTINGS;
     }

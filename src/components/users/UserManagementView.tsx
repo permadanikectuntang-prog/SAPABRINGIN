@@ -110,7 +110,7 @@ export const UserManagementView: React.FC = () => {
             Manajemen Pengguna & Hak Akses
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
-            Atur akun petugas loket, staf administrasi PATEN, dan administrator sistem SIAP BRINGIN.
+            Atur akun petugas loket, staf administrasi PATEN, dan administrator sistem SAPA BRINGIN.
           </p>
         </div>
 

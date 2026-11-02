@@ -301,7 +301,7 @@ export const ReportsView: React.FC = () => {
         {/* Official Kop Surat */}
         <div className="text-center border-b-4 border-double border-slate-900 pb-4 mb-6">
           <div className="flex items-center justify-center gap-5">
-            <BringinEmblem size="lg" logoUrl={settings.logoUrl} className="shrink-0" />
+            <BringinEmblem size="xl" logoUrl={settings.logoUrl} className="shrink-0 w-20 h-20" />
             
             <div className="text-center">
               <h3 className="text-sm sm:text-base font-bold uppercase tracking-wider text-slate-900">
@@ -313,11 +313,11 @@ export const ReportsView: React.FC = () => {
               <p className="text-xs text-slate-600 mt-1 max-w-xl mx-auto leading-tight">
                 {settings.institutionAddress || 'Jl. Raya Bringin No. 1 Bringin, Kab. Semarang, Jawa Tengah 50772'}
                 <br />
-                Pos-el: paten.bringin@semarangkab.go.id · Laman: siap-bringin.semarangkab.go.id
+                Pos-el: paten.bringin@semarangkab.go.id · Laman: sapa-bringin.semarangkab.go.id
               </p>
             </div>
 
-            <div className="w-16 hidden sm:block" /> {/* balance spacing */}
+            <div className="w-20 hidden sm:block" /> {/* balance spacing */}
           </div>
         </div>
 

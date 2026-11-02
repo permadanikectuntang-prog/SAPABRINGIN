@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { generateAppsScriptCode } from '../../services/googleSheetsService';
 import { parseExcelFile, exportAllServicesToExcel } from '../../services/excelService';
+import { BringinEmblem, OFFICIAL_KAB_SEMARANG_LOGO } from '../common/BringinEmblem';
 import { 
   Settings, 
   FileSpreadsheet, 
@@ -61,6 +62,23 @@ export const SettingsView: React.FC = () => {
   const [camatNip, setCamatNip] = useState<string>(settings.signers?.camatNip || '');
   const [kasiName, setKasiName] = useState<string>(settings.signers?.kasiName || '');
   const [kasiNip, setKasiNip] = useState<string>(settings.signers?.kasiNip || '');
+
+  React.useEffect(() => {
+    setAppName(settings.appName);
+    setAppFullName(settings.appFullName);
+    setInstitutionName(settings.institutionName);
+    setInstitutionAddress(settings.institutionAddress);
+    setGoogleSheetId(settings.googleSheetId);
+    setGoogleAppsScriptUrl(settings.googleAppsScriptUrl);
+    setSyncMode(settings.syncMode);
+    setLogoUrl(settings.logoUrl || '');
+    if (settings.signers) {
+      setCamatName(settings.signers.camatName || '');
+      setCamatNip(settings.signers.camatNip || '');
+      setKasiName(settings.signers.kasiName || '');
+      setKasiNip(settings.signers.kasiNip || '');
+    }
+  }, [settings]);
 
   // Test status
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; latencyMs: number } | null>(null);
@@ -190,7 +208,7 @@ export const SettingsView: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `BACKUP_DATABASE_SIAP_BRINGIN_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `BACKUP_DATABASE_SAPA_BRINGIN_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
     showToast('success', 'Cadangan database (backup JSON) berhasil diunduh.');
@@ -198,7 +216,7 @@ export const SettingsView: React.FC = () => {
 
   // Direct Excel Export with Multi-Sheet structure (Google Sheets compatible)
   const handleExportAllSheetsExcel = () => {
-    const filename = `DATABASE_SIAP_BRINGIN_GOOGLE_SHEETS_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const filename = `DATABASE_SAPA_BRINGIN_GOOGLE_SHEETS_${new Date().toISOString().split('T')[0]}.xlsx`;
     exportAllServicesToExcel(services, records, filename);
     showToast('success', `File spreadsheet multi-sheet "${filename}" berhasil diunduh. Anda dapat langsung mengimpornya ke Google Sheets!`);
   };
@@ -766,17 +784,37 @@ export const SettingsView: React.FC = () => {
             />
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-slate-700 font-semibold mb-1">
-              URL Logo / Lambang Kustom (Opsional)
+          <div className="md:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <label className="block text-slate-800 font-bold mb-2">
+              Logo / Lambang Resmi Daerah
             </label>
-            <input
-              type="text"
-              placeholder="Kosongkan untuk menggunakan lambang heraldik resmi Kecamatan Bringin yang sudah terpasang"
-              value={logoUrl}
-              onChange={(e) => setLogoUrl(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-600"
-            />
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-xs shrink-0 flex flex-col items-center">
+                <BringinEmblem size="lg" logoUrl={logoUrl || OFFICIAL_KAB_SEMARANG_LOGO} className="w-16 h-16" />
+                <span className="text-[10px] text-slate-500 font-medium mt-1">Pratinjau Logo</span>
+              </div>
+              <div className="flex-1 space-y-2 w-full">
+                <div className="text-[11px] text-slate-600 leading-relaxed">
+                  Lambang resmi <strong>Kabupaten Semarang</strong> ditampilkan pada seluruh header sistem, formulir pelayanan, kop surat laporan resmi, dan bukti tanda terima masyarakat.
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="text"
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="URL gambar logo"
+                    className="flex-1 min-w-[200px] px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setLogoUrl(OFFICIAL_KAB_SEMARANG_LOGO)}
+                    className="px-3 py-1.5 text-xs font-semibold text-emerald-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors whitespace-nowrap shadow-xs"
+                  >
+                    Gunakan Lambang Kab. Semarang
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Signers */}
@@ -892,7 +930,7 @@ export const SettingsView: React.FC = () => {
                   Panduan Pemasangan Backend Google Apps Script
                 </h3>
                 <p className="text-[11px] text-emerald-300">
-                  Ikuti 4 langkah mudah ini agar Google Sheets Anda otomatis terhubung dengan aplikasi SIAP BRINGIN.
+                  Ikuti 4 langkah mudah ini agar Google Sheets Anda otomatis terhubung dengan aplikasi SAPA BRINGIN.
                 </p>
               </div>
               <button
@@ -943,7 +981,7 @@ export const SettingsView: React.FC = () => {
                     2
                   </div>
                   <div className="w-full">
-                    <div className="font-bold text-slate-900">Tempelkan (Paste) Kode Backend SIAP BRINGIN</div>
+                    <div className="font-bold text-slate-900">Tempelkan (Paste) Kode Backend SAPA BRINGIN</div>
                     <p className="text-slate-600 mt-0.5 mb-2">
                       Hapus teks kode bawaan (seperti <code>function myFunction() &#123;&#125;</code>), lalu salin seluruh kode dari kotak di bawah dan tempelkan. Tekan ikon disket (Simpan / Ctrl+S).
                     </p>
@@ -972,7 +1010,7 @@ export const SettingsView: React.FC = () => {
                     </p>
                     <ul className="mt-2 space-y-1 text-slate-800 pl-2">
                       <li>• Klik ikon gerigi (Select type) &gt; pilih <strong>Web app (Aplikasi Web)</strong>.</li>
-                      <li>• Description: <code className="bg-white px-1 rounded border">SIAP Bringin Backend</code></li>
+                      <li>• Description: <code className="bg-white px-1 rounded border">SAPA Bringin Backend</code></li>
                       <li>• Execute as (Jalankan sebagai): <strong>Me (Saya - email Anda)</strong></li>
                       <li>• Who has access (Siapa yang memiliki akses): <strong className="text-emerald-800 underline bg-emerald-100/70 px-1 rounded">Anyone (Siapa saja)</strong> ⚠️ <em>Wajib dipilih 'Anyone' agar web app dapat mengirim data tanpa terblokir autentikasi redirect.</em></li>
                     </ul>
@@ -984,9 +1022,9 @@ export const SettingsView: React.FC = () => {
                     4
                   </div>
                   <div>
-                    <div className="font-bold text-slate-900">Salin Web App URL ke Aplikasi SIAP BRINGIN</div>
+                    <div className="font-bold text-slate-900">Salin Web App URL ke Aplikasi SAPA BRINGIN</div>
                     <p className="text-slate-600 mt-0.5">
-                      Klik <strong>Deploy</strong> (jika diminta izin, klik <em>Review permissions</em> &gt; pilih akun Google Anda &gt; <em>Advanced / Lanjutan</em> &gt; <em>Go to SIAP Bringin</em> &gt; <em>Allow / Izinkan</em>).
+                      Klik <strong>Deploy</strong> (jika diminta izin, klik <em>Review permissions</em> &gt; pilih akun Google Anda &gt; <em>Advanced / Lanjutan</em> &gt; <em>Go to SAPA Bringin</em> &gt; <em>Allow / Izinkan</em>).
                       <br />
                       Salin <strong>Web App URL</strong> yang dihasilkan (berakhiran <code>/exec</code>), tempelkan ke kolom <strong>URL Google Apps Script</strong> di Pengaturan ini, lalu klik <strong>Simpan Semua Pengaturan</strong>.
                     </p>

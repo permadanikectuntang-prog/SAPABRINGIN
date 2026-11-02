@@ -1,5 +1,5 @@
 /**
- * Types definition for SIAP BRINGIN
+ * Types definition for SAPA BRINGIN
  * Sistem Aplikasi Pelayanan Kecamatan Bringin, Kabupaten Semarang
  */
 

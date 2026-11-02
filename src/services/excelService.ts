@@ -1,5 +1,5 @@
 /**
- * Excel Service for SIAP BRINGIN
+ * Excel Service for SAPA BRINGIN
  * Handles importing raw Excel files (.xlsx, .xls, .csv), mapping columns,
  * validating NIK & dates, detecting duplicates, and exporting data.
  */
@@ -343,7 +343,7 @@ export function exportRecordsToExcel(
 export function exportAllServicesToExcel(
   services: ServiceConfig[],
   records: ServiceRecord[],
-  fileName: string = 'DATABASE_SIAP_BRINGIN_2026.xlsx'
+  fileName: string = 'DATABASE_SAPA_BRINGIN_2026.xlsx'
 ) {
   const wb = XLSX.utils.book_new();
 
