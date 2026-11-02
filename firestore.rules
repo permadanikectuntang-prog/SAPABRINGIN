@@ -1,0 +1,115 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connectivity verification probe
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // Global hardened primitives
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidService(data) {
+      return data.id is string && data.id.size() <= 64 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 150 &&
+             data.sheetName is string && data.sheetName.size() <= 100 &&
+             data.icon is string && data.icon.size() <= 50 &&
+             data.order is number &&
+             data.isActive is bool;
+    }
+
+    function isValidRecord(data) {
+      return data.id is string && data.id.size() <= 64 &&
+             data.serviceId is string && data.serviceId.size() <= 64 &&
+             data.registrationNumber is string && data.registrationNumber.size() <= 100 &&
+             data.serviceDate is string && data.serviceDate.size() <= 30 &&
+             data.applicantName is string && data.applicantName.size() > 0 && data.applicantName.size() <= 200 &&
+             data.nik is string && data.nik.size() >= 16 && data.nik.size() <= 20;
+    }
+
+    function isValidVillage(data) {
+      return data.id is string && data.id.size() <= 64 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.isActive is bool &&
+             data.order is number;
+    }
+
+    function isValidLog(data) {
+      return data.id is string && data.id.size() <= 64 &&
+             data.timestamp is string && data.timestamp.size() <= 40 &&
+             data.userName is string && data.userName.size() <= 150 &&
+             data.activityType is string && data.activityType.size() <= 60 &&
+             data.description is string && data.description.size() <= 1000;
+    }
+
+    function isValidSettings(data) {
+      return data.appName is string && data.appName.size() <= 50 &&
+             data.institutionName is string && data.institutionName.size() <= 200;
+    }
+
+    // 2. Services Schema & Master Configurations
+    match /services/{serviceId} {
+      allow get, list: if true;
+      allow create: if isValidId(serviceId) && isValidService(incoming());
+      allow update: if isValidId(serviceId) && isValidService(incoming());
+      allow delete: if isValidId(serviceId);
+    }
+
+    // 3. Citizen Administrative Service Records
+    match /records/{recordId} {
+      allow get, list: if true;
+      allow create: if isValidId(recordId) && isValidRecord(incoming());
+      allow update: if isValidId(recordId) && isValidRecord(incoming());
+      allow delete: if isValidId(recordId);
+    }
+
+    // 4. Village Directory
+    match /villages/{villageId} {
+      allow get, list: if true;
+      allow create: if isValidId(villageId) && isValidVillage(incoming());
+      allow update: if isValidId(villageId) && isValidVillage(incoming());
+      allow delete: if isValidId(villageId);
+    }
+
+    // 5. Activity Logs & Audit Trail
+    match /logs/{logId} {
+      allow get, list: if true;
+      allow create: if isValidId(logId) && isValidLog(incoming());
+      allow update, delete: if false; // Logs are strictly append-only
+    }
+
+    // 6. User Management
+    match /users/{userId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(userId);
+      allow delete: if isValidId(userId);
+    }
+
+    // 7. Municipal Settings
+    match /settings/{settingId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(settingId) && isValidSettings(incoming());
+      allow delete: if false;
+    }
+  }
+}

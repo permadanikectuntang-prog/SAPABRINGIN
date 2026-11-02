@@ -1,0 +1,323 @@
+{
+  "entities": {
+    "service": {
+      "title": "ServiceConfig",
+      "description": "Configuration schema for an administrative service in Kecamatan Bringin",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the service",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Official name of the public service",
+          "maxLength": 150
+        },
+        "sheetName": {
+          "type": "string",
+          "description": "Mapped Google Sheets tab name",
+          "maxLength": 100
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon identifier for UI display",
+          "maxLength": 50
+        },
+        "order": {
+          "type": "number",
+          "description": "Display order index"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the service is currently enabled"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp in ISO format",
+          "maxLength": 40
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed explanation of requirements and service scope",
+          "maxLength": 500
+        }
+      },
+      "required": ["id", "name", "sheetName", "icon", "order", "isActive", "createdAt"]
+    },
+    "record": {
+      "title": "ServiceRecord",
+      "description": "Citizen service submission or administrative record",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique record identifier",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "serviceId": {
+          "type": "string",
+          "description": "Identifier of the parent service",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "registrationNumber": {
+          "type": "string",
+          "description": "Official registration tracking code",
+          "maxLength": 100
+        },
+        "serviceDate": {
+          "type": "string",
+          "description": "Service date in YYYY-MM-DD format",
+          "maxLength": 20
+        },
+        "applicantName": {
+          "type": "string",
+          "description": "Full name of the applicant citizen",
+          "maxLength": 200
+        },
+        "nik": {
+          "type": "string",
+          "description": "16-digit Indonesian National Identity Number",
+          "maxLength": 20,
+          "minLength": 16,
+          "pattern": "^[0-9]{16}$"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "Username of the staff who registered the record",
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp",
+          "maxLength": 40
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update timestamp",
+          "maxLength": 40
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional administrative notes",
+          "maxLength": 1000
+        }
+      },
+      "required": ["id", "serviceId", "registrationNumber", "serviceDate", "applicantName", "nik", "createdBy", "createdAt"]
+    },
+    "village": {
+      "title": "VillageItem",
+      "description": "Village or Kelurahan within Kecamatan Bringin, Kabupaten Semarang",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the village",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Official name of the village",
+          "maxLength": 100
+        },
+        "code": {
+          "type": "string",
+          "description": "Kemendagri or regional village code",
+          "maxLength": 30
+        },
+        "headName": {
+          "type": "string",
+          "description": "Name of Kepala Desa / Lurah",
+          "maxLength": 150
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Active status of village in dropdowns"
+        },
+        "order": {
+          "type": "number",
+          "description": "Ordering priority"
+        }
+      },
+      "required": ["id", "name", "isActive", "order"]
+    },
+    "user": {
+      "title": "User",
+      "description": "Application administrative or operator user",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique user identifier",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full staff officer name",
+          "maxLength": 150
+        },
+        "username": {
+          "type": "string",
+          "description": "Staff login username",
+          "maxLength": 50,
+          "pattern": "^[a-zA-Z0-9_.-]+$"
+        },
+        "role": {
+          "type": "string",
+          "description": "Access control tier",
+          "enum": ["ADMINISTRATOR", "OPERATOR"]
+        },
+        "status": {
+          "type": "string",
+          "description": "Account activation status",
+          "enum": ["AKTIF", "NONAKTIF"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Account creation timestamp",
+          "maxLength": 40
+        }
+      },
+      "required": ["id", "name", "username", "role", "status", "createdAt"]
+    },
+    "log": {
+      "title": "ActivityLog",
+      "description": "Audit trail log record of municipal operational actions",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique log entry identifier",
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Event timestamp",
+          "maxLength": 40
+        },
+        "userName": {
+          "type": "string",
+          "description": "Name of the staff performing action",
+          "maxLength": 150
+        },
+        "userRole": {
+          "type": "string",
+          "description": "Role of the actor",
+          "enum": ["ADMINISTRATOR", "OPERATOR"]
+        },
+        "activityType": {
+          "type": "string",
+          "description": "Categorical activity type",
+          "maxLength": 60
+        },
+        "serviceName": {
+          "type": "string",
+          "description": "Associated service name if applicable",
+          "maxLength": 150
+        },
+        "dataId": {
+          "type": "string",
+          "description": "Target resource ID",
+          "maxLength": 64
+        },
+        "description": {
+          "type": "string",
+          "description": "Descriptive summary of the action",
+          "maxLength": 1000
+        }
+      },
+      "required": ["id", "timestamp", "userName", "userRole", "activityType", "description"]
+    },
+    "settings": {
+      "title": "AppSettings",
+      "description": "Global institutional configuration and Google Sheets synchronization parameters",
+      "type": "object",
+      "properties": {
+        "appName": {
+          "type": "string",
+          "description": "Application abbreviation",
+          "maxLength": 50
+        },
+        "appFullName": {
+          "type": "string",
+          "description": "Full formal title",
+          "maxLength": 200
+        },
+        "institutionName": {
+          "type": "string",
+          "description": "Government institution name",
+          "maxLength": 200
+        },
+        "institutionAddress": {
+          "type": "string",
+          "description": "Official municipal address",
+          "maxLength": 300
+        },
+        "googleSheetId": {
+          "type": "string",
+          "description": "Configured Google Spreadsheet ID",
+          "maxLength": 150
+        },
+        "googleAppsScriptUrl": {
+          "type": "string",
+          "description": "Google Apps Script Web App Deployment URL",
+          "maxLength": 500
+        },
+        "syncMode": {
+          "type": "string",
+          "description": "Auto or manual sync mode",
+          "enum": ["auto", "manual"]
+        },
+        "lastSyncTime": {
+          "type": "string",
+          "description": "Last successful sync ISO timestamp",
+          "maxLength": 40
+        },
+        "dateFormat": {
+          "type": "string",
+          "description": "Display date format",
+          "maxLength": 30
+        },
+        "timezone": {
+          "type": "string",
+          "description": "Municipal time zone",
+          "maxLength": 40
+        }
+      },
+      "required": ["appName", "institutionName", "syncMode"]
+    }
+  },
+  "firestore": {
+    "/services/{serviceId}": {
+      "schema": "service",
+      "description": "Administrative service definitions and schemas for Kecamatan Bringin"
+    },
+    "/records/{recordId}": {
+      "schema": "record",
+      "description": "Citizen public service requests and administrative records"
+    },
+    "/villages/{villageId}": {
+      "schema": "village",
+      "description": "Directory of 16 villages in Kecamatan Bringin"
+    },
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "Operator and administrator account records"
+    },
+    "/logs/{logId}": {
+      "schema": "log",
+      "description": "Audit trails and user action logs"
+    },
+    "/settings/{settingId}": {
+      "schema": "settings",
+      "description": "Global municipal configuration and sync settings"
+    }
+  }
+}

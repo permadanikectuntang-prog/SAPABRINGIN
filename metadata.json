@@ -1,0 +1,6 @@
+{
+  "name": "SIAP BRINGIN - Sistem Aplikasi Pelayanan Kecamatan Bringin",
+  "description": "Sistem Aplikasi Pelayanan Kecamatan Bringin, Kabupaten Semarang terintegrasi Google Sheets untuk pengelolaan, pemantauan, dan pelaporan pelayanan masyarakat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
