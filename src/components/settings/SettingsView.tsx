@@ -520,7 +520,7 @@ export const SettingsView: React.FC = () => {
 
           {/* Test connection result notice */}
           {testResult && (
-            <div className={`p-3.5 rounded-lg border text-xs ${
+            <div className={`p-4 rounded-xl border text-xs ${
               testResult.success
                 ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                 : 'bg-rose-50 border-rose-300 text-rose-800'
@@ -530,6 +530,30 @@ export const SettingsView: React.FC = () => {
                 <span>{testResult.success ? 'Koneksi Berhasil!' : 'Koneksi Gagal'}</span>
               </div>
               <p className="mt-1 pl-5.5 leading-relaxed">{testResult.message}</p>
+              {!testResult.success && (
+                <div className="mt-3 pl-5.5 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCodeModal(true)}
+                    className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+                  >
+                    <Copy className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Buka Panduan & Salin Skrip Apps Script</span>
+                  </button>
+                  {googleAppsScriptUrl.includes('EXAMPLE') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGoogleAppsScriptUrl('');
+                        setTestResult(null);
+                      }}
+                      className="px-3 py-1.5 bg-white border border-rose-300 hover:bg-rose-100 text-rose-800 font-bold rounded-lg text-xs transition-colors"
+                    >
+                      Hapus Teks Contoh Ini
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -556,7 +580,7 @@ export const SettingsView: React.FC = () => {
                 type="text"
                 placeholder="Contoh: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
                 value={googleSheetId}
-                onChange={(e) => setGoogleSheetId(e.target.value)}
+                onChange={(e) => setGoogleSheetId(e.target.value.trim())}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-mono text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600"
               />
               <p className="text-[10px] text-slate-400 mt-1">
@@ -565,14 +589,28 @@ export const SettingsView: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-slate-700 font-semibold mb-1">
-                URL Google Apps Script (Web App Endpoint)
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-slate-700 font-semibold">
+                  URL Google Apps Script (Web App Endpoint)
+                </label>
+                {googleAppsScriptUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGoogleAppsScriptUrl('');
+                      setTestResult(null);
+                    }}
+                    className="text-[10px] text-rose-600 hover:text-rose-800 underline font-medium"
+                  >
+                    Hapus / Kosongkan
+                  </button>
+                )}
+              </div>
               <input
                 type="text"
                 placeholder="https://script.google.com/macros/s/AKfycb.../exec"
                 value={googleAppsScriptUrl}
-                onChange={(e) => setGoogleAppsScriptUrl(e.target.value)}
+                onChange={(e) => setGoogleAppsScriptUrl(e.target.value.trim())}
                 className={`w-full px-3 py-2 bg-slate-50 border rounded-lg font-mono text-xs focus:outline-none focus:ring-1 ${
                   googleAppsScriptUrl.includes('EXAMPLE') || googleAppsScriptUrl.includes('SIAP_BRINGIN_EXAM')
                     ? 'border-amber-400 ring-1 ring-amber-300 bg-amber-50/30'
@@ -580,16 +618,53 @@ export const SettingsView: React.FC = () => {
                 }`}
               />
               {googleAppsScriptUrl.includes('EXAMPLE') || googleAppsScriptUrl.includes('SIAP_BRINGIN_EXAM') ? (
-                <p className="text-[10px] text-amber-700 font-semibold mt-1 flex items-center gap-1">
-                  <span>⚠️ Masih berupa URL contoh. Ganti dengan URL hasil deploy Apps Script Anda.</span>
-                </p>
+                <div className="mt-1.5 p-2.5 bg-amber-50 border border-amber-300 rounded-lg text-[11px] text-amber-900 space-y-1.5">
+                  <div className="font-bold flex items-center gap-1.5 text-amber-950">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Ini Teks Contoh Bawaan (Bukan URL Asli Anda)</span>
+                  </div>
+                  <p className="text-[10px] text-amber-800 leading-relaxed">
+                    Sistem tidak bisa tersambung ke teks contoh ini. Anda harus membuat skrip di Google Spreadsheet Anda sendiri untuk mendapatkan URL Web App asli.
+                  </p>
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowCodeModal(true)}
+                      className="px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold rounded text-[11px] flex items-center gap-1 shadow-2xs"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Buka Panduan & Salin Skrip</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGoogleAppsScriptUrl('');
+                        setTestResult(null);
+                      }}
+                      className="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium rounded text-[11px]"
+                    >
+                      Hapus Teks Contoh Ini
+                    </button>
+                  </div>
+                </div>
+              ) : !googleAppsScriptUrl ? (
+                <div className="mt-1 flex items-center justify-between text-[10px] text-slate-500">
+                  <span>Tempelkan URL Web App (berakhiran <code>/exec</code>) di sini.</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowCodeModal(true)}
+                    className="text-emerald-700 hover:text-emerald-900 font-bold underline"
+                  >
+                    Cara Dapatkan URL?
+                  </button>
+                </div>
               ) : googleAppsScriptUrl.startsWith('https://script.google.com/macros/s/') && googleAppsScriptUrl.endsWith('/exec') ? (
                 <p className="text-[10px] text-emerald-700 font-semibold mt-1 flex items-center gap-1">
                   <span>✓ Format URL Web App valid. Klik 'Uji Koneksi' untuk menguji.</span>
                 </p>
               ) : (
-                <p className="text-[10px] text-slate-400 mt-1">
-                  Dihasilkan setelah Anda men-deploy skrip Apps Script sebagai 'Web App' (berakhiran /exec).
+                <p className="text-[10px] text-rose-600 font-medium mt-1">
+                  ⚠️ Format URL belum sesuai. Pastikan berawalan "https://script.google.com/macros/s/..." dan berakhiran "/exec".
                 </p>
               )}
             </div>

@@ -213,6 +213,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (!parsed.logoUrl || parsed.logoUrl.trim() === '') {
           parsed.logoUrl = '/assets/aistudio/Lambang_Kabupaten_Semarang_157237ff.webp';
         }
+        if (parsed.googleAppsScriptUrl && (
+          parsed.googleAppsScriptUrl.includes('EXAMPLE') || 
+          parsed.googleAppsScriptUrl.includes('SIAP_BRINGIN_EXAM') || 
+          parsed.googleAppsScriptUrl.includes('AKfycbzSIAP')
+        )) {
+          parsed.googleAppsScriptUrl = '';
+        }
         return parsed;
       }
       return DEFAULT_SETTINGS;
@@ -469,12 +476,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     let updatedRegNo = '';
     let updatedRecordObj: ServiceRecord | null = null;
+    let oldServiceName = '';
+    let isServiceChanged = false;
 
     setRecords(prev => prev.map(rec => {
       if (rec.id === recordId) {
-        updatedRegNo = rec.registrationNumber;
-        const modified = {
+        const oldSrv = services.find(s => s.id === rec.serviceId);
+        oldServiceName = oldSrv ? oldSrv.name : rec.serviceId;
+        isServiceChanged = rec.serviceId !== serviceId;
+
+        // If service type was changed, adjust registration number prefix
+        let newRegNo = rec.registrationNumber;
+        if (isServiceChanged && srv) {
+          const newPrefix = `REG-${srv.id.substring(0, 3).toUpperCase()}`;
+          const parts = (rec.registrationNumber || '').split('/');
+          if (parts.length >= 4) {
+            newRegNo = `${newPrefix}/${parts[1]}/${parts[2]}/${parts[3]}`;
+          }
+        }
+        updatedRegNo = newRegNo;
+
+        const modified: ServiceRecord = {
           ...rec,
+          serviceId, // Perubahan jenis pelayanan disimpan
+          registrationNumber: newRegNo,
+          serviceDate: data.serviceDate || rec.serviceDate,
           applicantName: applicantName.trim(),
           nik: cleanNik,
           data: {
@@ -495,14 +521,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       saveRecordToFirebase(updatedRecordObj).catch(() => {});
     }
 
+    const logDesc = isServiceChanged
+      ? `Mengubah jenis pelayanan ${applicantName} dari "${oldServiceName}" menjadi "${serviceName}" (${updatedRegNo || recordId})`
+      : `Memperbarui data pelayanan ${applicantName} (${updatedRegNo || recordId})`;
+
     addLog(
       'EDIT_DATA',
-      `Memperbarui data pelayanan ${applicantName} (${updatedRegNo || recordId})`,
+      logDesc,
       serviceName,
       updatedRegNo
     );
 
-    showToast('success', `Perubahan data pemohon ${applicantName} berhasil diperbarui.`);
+    showToast('success', isServiceChanged
+      ? `Data pemohon ${applicantName} berhasil dipindahkan ke jenis pelayanan "${serviceName}".`
+      : `Perubahan data pemohon ${applicantName} berhasil diperbarui.`
+    );
     return true;
   };
 

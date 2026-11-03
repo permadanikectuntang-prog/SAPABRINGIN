@@ -407,7 +407,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   institutionAddress: 'Jl. Raya Bringin No. 1 Bringin, Kab. Semarang, Jawa Tengah 50772',
   logoUrl: '/assets/aistudio/Lambang_Kabupaten_Semarang_157237ff.webp',
   googleSheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
-  googleAppsScriptUrl: 'https://script.google.com/macros/s/AKfycbzSIAP_BRINGIN_EXAMPLE_KEY/exec',
+  googleAppsScriptUrl: '',
   syncMode: 'auto',
   lastSyncTime: '2026-11-01 18:30 WIB',
   dateFormat: 'DD-MM-YYYY',

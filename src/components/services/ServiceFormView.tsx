@@ -49,7 +49,31 @@ export const ServiceFormView: React.FC<ServiceFormViewProps> = ({
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Initialize or reset form data when activeService or editingRecord changes
+  const handleServiceChange = (newServiceId: string) => {
+    if (newServiceId === selectedServiceId) return;
+    setSelectedServiceId(newServiceId);
+
+    const targetService = services.find(s => s.id === newServiceId);
+    if (!targetService) return;
+
+    // Preserve common fields (desa, rt, rw, pekerjaan, alamat, etc.) and merge defaults for any new fields
+    setFormData(prev => {
+      const updated = { ...prev };
+      targetService.fields.forEach(field => {
+        if (updated[field.id] === undefined || updated[field.id] === '') {
+          if (field.defaultValue) {
+            updated[field.id] = field.defaultValue;
+          }
+        }
+      });
+      return updated;
+    });
+
+    // Clear validation errors
+    setValidationErrors({});
+  };
+
+  // Initialize or reset form data when editingRecord changes
   useEffect(() => {
     if (editingRecord) {
       setSelectedServiceId(editingRecord.serviceId);
@@ -58,15 +82,16 @@ export const ServiceFormView: React.FC<ServiceFormViewProps> = ({
       setServiceDate(editingRecord.serviceDate || new Date().toISOString().split('T')[0]);
       setNotes(editingRecord.notes || editingRecord.data?.keterangan || '');
       setFormData(editingRecord.data || {});
+      setValidationErrors({});
     } else {
       // Default initial empty values based on active service fields
       const defaults: Record<string, any> = {};
-      if (activeService) {
-        activeService.fields.forEach(field => {
+      const currentService = services.find(s => s.id === selectedServiceId) || services[0];
+      if (currentService) {
+        currentService.fields.forEach(field => {
           if (field.defaultValue) {
             defaults[field.id] = field.defaultValue;
           } else if (field.type === 'dropdown' && field.options && field.options.length > 0) {
-            // keep empty or first option if required
             defaults[field.id] = '';
           }
         });
@@ -78,7 +103,7 @@ export const ServiceFormView: React.FC<ServiceFormViewProps> = ({
       setNotes('');
       setValidationErrors({});
     }
-  }, [selectedServiceId, editingRecord, activeService]);
+  }, [editingRecord?.id]);
 
   const handleFieldChange = (fieldId: string, value: any) => {
     setFormData(prev => ({ ...prev, [fieldId]: value }));
@@ -169,6 +194,7 @@ export const ServiceFormView: React.FC<ServiceFormViewProps> = ({
         );
         onSaved({
           ...editingRecord,
+          serviceId: activeService.id,
           applicantName,
           nik,
           serviceDate,
@@ -215,6 +241,9 @@ export const ServiceFormView: React.FC<ServiceFormViewProps> = ({
     }
   };
 
+  const isServiceChanged = editingRecord && editingRecord.serviceId !== selectedServiceId;
+  const originalService = editingRecord ? services.find(s => s.id === editingRecord.serviceId) : null;
+
   return (
     <div className="max-w-4xl mx-auto space-y-5">
       
@@ -230,22 +259,32 @@ export const ServiceFormView: React.FC<ServiceFormViewProps> = ({
             <span>Kembali ke Daftar Data</span>
           </button>
 
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            {editingRecord ? 'Ubah Data Pelayanan' : 'Formulir Input Pelayanan'}
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              {editingRecord ? 'Ubah Data Pelayanan' : 'Formulir Input Pelayanan'}
+            </h1>
+            {editingRecord && (
+              <span className="px-2 py-0.5 text-xs font-semibold rounded bg-amber-100 text-amber-900 border border-amber-300">
+                Mode Edit
+              </span>
+            )}
+          </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             Pencatatan administrasi pelayanan masyarakat Kecamatan Bringin, Kabupaten Semarang.
           </p>
         </div>
 
-        {/* Service Selector (disabled in edit mode) */}
-        {!editingRecord && (
+        {/* Service Selector (Active in BOTH create and edit modes) */}
+        <div className="flex flex-col sm:items-end gap-1.5">
+          <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <Layers className="w-3.5 h-3.5 text-emerald-700" />
+            <span>{editingRecord ? 'Ubah Jenis Pelayanan:' : 'Pilih Jenis Pelayanan:'}</span>
+          </label>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-slate-500 whitespace-nowrap">Pilih Jenis:</span>
             <select
               value={selectedServiceId}
-              onChange={(e) => setSelectedServiceId(e.target.value)}
-              className="px-3 py-2 text-xs font-semibold bg-emerald-50 border border-emerald-300 text-emerald-950 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              onChange={(e) => handleServiceChange(e.target.value)}
+              className="px-3 py-2 text-xs font-bold bg-emerald-50 border-2 border-emerald-600 text-emerald-950 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-700 shadow-xs cursor-pointer hover:bg-emerald-100/60 transition-colors"
             >
               {services.map(s => (
                 <option key={s.id} value={s.id}>
@@ -254,26 +293,87 @@ export const ServiceFormView: React.FC<ServiceFormViewProps> = ({
               ))}
             </select>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Main Dynamic Form */}
       <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         
         {/* Service Subheader */}
-        <div className="px-6 py-4 bg-emerald-950 text-white flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">
-              {activeService?.sheetName || 'PELAYANAN'}
-            </span>
-            <h2 className="text-base font-bold text-white mt-0.5">
-              {activeService?.name}
-            </h2>
+        <div className="px-6 py-4 bg-emerald-950 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">
+                {activeService?.sheetName || 'PELAYANAN'}
+              </span>
+              {isServiceChanged && (
+                <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-500 text-amber-950 rounded-full animate-pulse">
+                  Jenis Layanan Berubah
+                </span>
+              )}
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3 mt-1">
+              <h2 className="text-lg font-bold text-white">
+                {activeService?.name}
+              </h2>
+
+              {/* Direct Quick-Change Dropdown in Edit Mode */}
+              {editingRecord && (
+                <div className="inline-flex items-center gap-2 bg-emerald-900/90 border border-emerald-700 px-2.5 py-1 rounded-lg">
+                  <span className="text-[11px] text-emerald-200 font-medium">Ganti Pelayanan:</span>
+                  <select
+                    value={selectedServiceId}
+                    onChange={(e) => handleServiceChange(e.target.value)}
+                    className="bg-emerald-950 text-amber-300 font-bold text-xs border border-emerald-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-300 cursor-pointer"
+                  >
+                    {services.map(s => (
+                      <option key={s.id} value={s.id} className="bg-slate-900 text-white font-medium">
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
           </div>
-          <span className="text-xs text-emerald-200 font-mono hidden sm:inline-block">
-            Sheet Google Sheets: {activeService?.sheetName}
-          </span>
+
+          <div className="text-left sm:text-right">
+            <span className="text-xs text-emerald-200 font-mono block">
+              Sheet Google Sheets: {activeService?.sheetName}
+            </span>
+            {editingRecord && (
+              <span className="text-[11px] text-emerald-300/80 font-mono block mt-0.5">
+                No. Registrasi: {editingRecord.registrationNumber}
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Change Service Alert Banner */}
+        {isServiceChanged && originalService && (
+          <div className="m-6 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-950 shadow-xs">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl leading-none mt-0.5">🔄</span>
+              <div>
+                <p className="text-xs font-bold text-amber-950">
+                  Perubahan Jenis Pelayanan Aktif
+                </p>
+                <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                  Data pemohon ini sedang dialihkan dari <strong>{originalService.name}</strong> ke <strong>{activeService?.name}</strong>.
+                  Data pemohon (Nama, NIK, Tanggal, Desa, Alamat, Keterangan) tetap dipertahankan. Saat disimpan, nomor registrasi dan sheet sinkronisasi Google Sheets akan otomatis diperbarui ke kategori baru.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleServiceChange(originalService.id)}
+              className="self-start sm:self-auto px-3 py-1.5 text-xs font-bold bg-white border border-amber-400 text-amber-900 rounded-lg hover:bg-amber-100 whitespace-nowrap shadow-xs transition-colors"
+            >
+              Kembalikan ke {originalService.name}
+            </button>
+          </div>
+        )}
 
         <div className="p-6 space-y-6">
           

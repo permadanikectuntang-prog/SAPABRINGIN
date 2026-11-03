@@ -35,7 +35,7 @@ export async function testGoogleSheetsConnection(
   if (!appsScriptUrl || appsScriptUrl.trim() === '') {
     return {
       success: false,
-      message: 'URL Google Apps Script belum diisi. Silakan masukkan URL Web App Apps Script Anda.',
+      message: 'URL Google Apps Script belum diisi. Klik tombol kuning "Kode Apps Script & Panduan" di atas untuk menyalin skrip, pasang di Google Spreadsheet Anda, lalu tempelkan URL Web App (berakhiran /exec) di sini.',
       latencyMs: 0,
     };
   }
@@ -46,7 +46,7 @@ export async function testGoogleSheetsConnection(
   if (cleanUrl.includes('EXAMPLE') || cleanUrl.includes('SIAP_BRINGIN_EXAM') || cleanUrl.includes('AKfycbzSIAP')) {
     return {
       success: false,
-      message: 'URL Google Apps Script saat ini masih berupa URL CONTOH (Placeholder). Anda harus memasang skrip di Google Spreadsheet Anda dan menempelkan Web App URL yang sebenarnya (berakhiran /exec).',
+      message: 'Penyebab: Kolom URL saat ini masih terisi teks contoh bawaan (...EXAMPLE_KEY...). Solusi: Hapus teks tersebut, lalu masukkan URL Web App asli dari menu "Deploy > New deployment" di Google Spreadsheet Anda.',
       latencyMs: 0,
     };
   }
